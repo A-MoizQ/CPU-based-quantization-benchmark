@@ -1,0 +1,3 @@
+{"id":"sample-0","dataset":"sample","text":"Quantization reduces model memory bandwidth by storing neural network values in fewer bits while trying to preserve output quality."}
+{"id":"sample-1","dataset":"sample","text":"A fair CPU benchmark should measure load time, resident memory, prompt processing speed, token generation speed, artifact size, and output quality."}
+{"id":"sample-2","dataset":"sample","text":"KV cache compression becomes more important as the context window grows because each generated token reuses stored attention keys and values."}
