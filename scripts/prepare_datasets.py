@@ -1,3 +1,9 @@
+"""Prepare compact JSONL datasets for the TinyLlama quantization benchmarks.
+
+The script intentionally keeps the processed files small enough for a low-RAM
+machine, while still producing long-context prompts for KV-cache experiments.
+"""
+
 import argparse
 import json
 import re
@@ -6,6 +12,9 @@ from pathlib import Path
 from datasets import load_dataset
 
 from benchlib import write_json
+
+
+MODEL_TARGET = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 
 def normalize_text(text):
@@ -34,7 +43,7 @@ def build_wikitext(max_samples):
 
 
 def build_lambada(max_samples):
-    ds = load_dataset("lambada", split="validation")
+    ds = load_dataset("EleutherAI/lambada_openai", "en", split="test")
     rows = []
     for item in ds:
         text = normalize_text(item.get("text", ""))
@@ -103,6 +112,7 @@ def main():
     write_jsonl(files["long_wikitext2"], long_rows)
 
     manifest = {
+        "model_target": MODEL_TARGET,
         "files": {name: str(path) for name, path in files.items()},
         "counts": {
             "wikitext2": len(wikitext_rows),
@@ -110,9 +120,15 @@ def main():
             "long_wikitext2": len(long_rows),
         },
         "long_target_words": args.long_target_words,
+        "sources": {
+            "wikitext2": "Hugging Face datasets: wikitext / wikitext-2-raw-v1 / test",
+            "lambada": "Hugging Face datasets: EleutherAI/lambada_openai / en / test",
+            "long_wikitext2": "Concatenated windows derived from the processed WikiText-2 rows",
+        },
         "notes": [
             "Use wikitext2/lambada for general speed and lightweight quality checks.",
             "Use long_wikitext2 for KV-cache footprint and decode-speed stress tests.",
+            "The dataset files are model-independent, but this project documents TinyLlama as the experiment model.",
         ],
     }
     write_json(out / "manifest.json", manifest)

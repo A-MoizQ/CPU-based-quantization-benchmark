@@ -9,16 +9,14 @@ The important distinction:
 
 ## Recommended CPU Target
 
-For the final i5 6th gen / 4 GB RAM experiments, do not use `TinyLlama/TinyLlama-1.1B-Chat-v1.0` as the main model. It is useful only as a smoke test. A 1.1B model is already small enough that Python/runtime overhead can hide the effect of quantization.
+For the final i5 6th gen / 4 GB RAM experiments, use TinyLlama as the single documented model target. The Hugging Face model is useful for Colab quantization and PyTorch-based checks, while GGUF TinyLlama through `llama.cpp` is the practical CPU inference path.
 
-Recommended ladder:
+Recommended model target:
 
 | Purpose | Model/artifact |
 | --- | --- |
-| Smoke test | `facebook/opt-125m` |
-| Real small HF test | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` if it fits |
+| HF/Colab quantization | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` |
 | Practical CPU test | TinyLlama 1.1B GGUF through `llama.cpp` |
-| Stretch test | 2B-3B 4-bit GGUF only if the machine does not swap |
 
 On 4 GB RAM, `llama.cpp`/GGUF is usually the more realistic CPU path than full PyTorch for 1B+ models.
 
@@ -40,12 +38,12 @@ python scripts/prepare_datasets.py
 
 This downloads small slices of WikiText-2 and LAMBADA, then creates a longer concatenated WikiText-2 set for KV-cache experiments. The processed files live in `datasets/processed/`.
 
-3. Run a smoke test before trying larger artifacts:
+3. Run a small TinyLlama CPU check before trying every artifact:
 
 ```bash
 python scripts/benchmark_transformers_cpu.py \
-  --model-path facebook/opt-125m \
-  --method fp32_smoke \
+  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --method tinyllama_fp32_check \
   --dataset datasets/processed/wikitext2.jsonl \
   --max-samples 2 \
   --max-input-tokens 256 \
@@ -72,7 +70,7 @@ python scripts/benchmark_transformers_cpu.py \
 
 ```bash
 python scripts/kv_quant_reference.py \
-  --model-path facebook/opt-125m \
+  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
   --method turboquant \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-samples 4 \
@@ -101,11 +99,11 @@ Run the FP16 baseline first, then run each quantization notebook on the same Col
 | `notebooks/01_llm_int8_bitsandbytes.ipynb` | LLM.int8 | HF/bitsandbytes model folder | Standard INT8 baseline |
 | `notebooks/02_gptq_gptqmodel.ipynb` | GPTQ INT4 | GPTQ model folder | Weight-only 4-bit checkpoint |
 | `notebooks/03_awq_autoawq.ipynb` | AWQ INT4 | AWQ model folder | Weight-only 4-bit checkpoint |
-| `notebooks/04_smoothquant_official.ipynb` | SmoothQuant W8A8 | Official SmoothQuant OPT export or smoothing scales | W8A8 OPT path |
+| `notebooks/04_smoothquant_official.ipynb` | SmoothQuant W8A8 | SmoothQuant export or smoothing scales | W8A8 path |
 | `notebooks/05_turboquant_kv_cache.ipynb` | TurboQuant-style KV cache | `compressed_kv_cache.pt` plus metrics | KV-cache memory study |
 | `notebooks/06_rotorquant_kv_cache.ipynb` | RotorQuant-style KV cache | `compressed_kv_cache.pt` plus metrics | KV-cache memory study |
 
-All notebooks default to `facebook/opt-125m` because it is public and quick to run on Colab. Change `MODEL_ID` consistently across notebooks for the real comparison.
+All notebooks should use `TinyLlama/TinyLlama-1.1B-Chat-v1.0` as the documented experiment model. Keep `MODEL_ID` consistent across notebooks for the real comparison.
 
 ## Output Layout
 
@@ -141,7 +139,7 @@ Source status checked on 2026-05-08.
 Saved model folders are not equally portable to CPU:
 
 - GPTQ: most CPU-friendly among the 4-bit notebook paths. Reload with `GPTQConfig(bits=4, use_exllama=False)`.
-- SmoothQuant: for CPU, prefer an ONNX Runtime or Intel Neural Compressor export path. The notebook uses official MIT SmoothQuant OPT artifacts and shows where to run the official export script.
+- SmoothQuant: for CPU, prefer an ONNX Runtime or Intel Neural Compressor export path. Treat any model-family-specific export limitation as part of the experimental limitations.
 - AWQ: optimized primarily for CUDA/TinyChat-style kernels; CPU loading depends on the runtime stack.
 - LLM.int8: bitsandbytes is primarily an inference/runtime quantization path; CPU support depends on installed bitsandbytes backends.
 - TurboQuant/RotorQuant: these target KV-cache storage during generation, so CPU testing requires an inference engine integration, not only a saved HF checkpoint.
@@ -245,7 +243,7 @@ These methods are KV-cache methods, so the included script measures CPU cache co
 
 ```bash
 python scripts/kv_quant_reference.py \
-  --model-path facebook/opt-125m \
+  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
   --method turboquant \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-input-tokens 1536 \
@@ -253,7 +251,7 @@ python scripts/kv_quant_reference.py \
   --threads 4
 
 python scripts/kv_quant_reference.py \
-  --model-path facebook/opt-125m \
+  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
   --method rotorquant \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-input-tokens 1536 \

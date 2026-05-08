@@ -2,6 +2,8 @@
 
 This folder is for benchmark datasets and derived prompt files.
 
+The documented experiment model for this project is `TinyLlama/TinyLlama-1.1B-Chat-v1.0`. The dataset files are model-independent JSONL prompt files, but the benchmark commands in the root README assume TinyLlama for both Colab quantization and CPU tests.
+
 Run:
 
 ```bash
