@@ -93,9 +93,25 @@ def quantize_rotor(x, bits, rotations):
     return q, scale, deq.to(x.dtype)
 
 
+def iter_kv_layers(past_key_values):
+    """Iterate over (key, value) tensors for both legacy tuple-list format
+    and the newer transformers DynamicCache object (transformers >= 4.38)."""
+    if past_key_values is None:
+        return
+    try:
+        # DynamicCache exposes .key_cache and .value_cache as plain lists
+        for k, v in zip(past_key_values.key_cache, past_key_values.value_cache):
+            yield k, v
+    except AttributeError:
+        # Legacy: list/tuple of (key, value) pairs
+        for layer in past_key_values:
+            if isinstance(layer, (tuple, list)):
+                yield layer[0], layer[1]
+
+
 def kv_cache_bytes(past_key_values):
     total = 0
-    for key, value in past_key_values:
+    for key, value in iter_kv_layers(past_key_values):
         total += key.numel() * key.element_size()
         total += value.numel() * value.element_size()
     return total
@@ -155,17 +171,18 @@ def main():
                 outputs = model(**encoded, use_cache=True)
                 prefill_seconds = time.perf_counter() - start
             past = outputs.past_key_values
-            head_dim = past[0][0].shape[-1]
+            first_key, _ = next(iter_kv_layers(past))
+            head_dim = first_key.shape[-1]
             transform = (
-                make_random_orthogonal(head_dim, past[0][0].dtype)
+                make_random_orthogonal(head_dim, first_key.dtype)
                 if args.method == "turboquant"
-                else random_3d_rotations(math.ceil(head_dim / 3), past[0][0].dtype)
+                else random_3d_rotations(math.ceil(head_dim / 3), first_key.dtype)
             )
 
             layer_reports = []
             packed_bits = 0
             quant_seconds = 0.0
-            for layer_idx, (key, value) in enumerate(past):
+            for layer_idx, (key, value) in enumerate(iter_kv_layers(past)):
                 start = time.perf_counter()
                 if args.method == "turboquant":
                     _, _, key_deq = quantize_turbo(key, args.bits, transform)
