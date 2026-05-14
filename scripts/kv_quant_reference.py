@@ -59,7 +59,7 @@ def apply_block_rotations(x, rotations, inverse=False):
     blocks = x.reshape(*x.shape[:-1], -1, 3)
     r = rotations.transpose(-1, -2) if inverse else rotations
     y = torch.einsum("...bi,bij->...bj", blocks, r)
-    y = y.reshape(*x.shape[:-2], -1)
+    y = y.reshape(*x.shape[:-1], -1)
     if pad:
         y = y[..., :dim]
     return y.reshape(orig_shape)

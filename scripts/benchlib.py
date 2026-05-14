@@ -1,7 +1,10 @@
 import json
 import os
 import platform
-import resource
+try:
+    import resource
+except ImportError:
+    resource = None
 import threading
 import time
 from pathlib import Path
@@ -57,11 +60,16 @@ def read_jsonl(path, limit=None):
 
 
 def current_rss_bytes(pid=None):
-    if psutil is not None:
-        proc = psutil.Process(pid or os.getpid())
-        return proc.memory_info().rss
-    # ru_maxrss is KiB on Linux, bytes on macOS. This project targets Linux.
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+    if platform.system() == "Windows":
+        if psutil is not None:
+            proc = psutil.Process(pid or os.getpid())
+            return proc.memory_info().rss
+        return 0
+    else:
+        if resource is not None:
+            # ru_maxrss is KiB on Linux, bytes on macOS. This project targets Linux.
+            return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+        return 0
 
 
 class MemorySampler:
