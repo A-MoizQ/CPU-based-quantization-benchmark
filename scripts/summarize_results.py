@@ -29,6 +29,8 @@ SUMMARY_KEYS = [
 
 def load_json_files(root):
     for path in sorted(Path(root).glob("*.json")):
+        if path.name.endswith("_comparison.json"):
+            continue
         try:
             yield path, json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:

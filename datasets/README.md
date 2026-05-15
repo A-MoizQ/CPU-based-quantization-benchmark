@@ -1,20 +1,16 @@
 # Datasets
 
-This folder is for benchmark datasets and derived prompt files.
+The current experiment uses only the processed WikiText-2 JSONL files:
 
-The documented experiment model for this project is `TinyLlama/TinyLlama-1.1B-Chat-v1.0`. The dataset files are model-independent JSONL prompt files, but the benchmark commands in the root README assume TinyLlama for both Colab quantization and CPU tests.
+- `datasets/processed/wikitext2.jsonl` for the AWQ INT4 CPU baseline.
+- `datasets/processed/long_wikitext2.jsonl` for TurboQuant-style and RotorQuant-style KV-cache tests.
 
-Run:
+Regenerate them with:
 
 ```bash
 python scripts/prepare_datasets.py
 ```
 
-The script writes small JSONL files under `datasets/processed/`:
+The processed files are ignored because they can be regenerated. The benchmark result files that describe the runs are stored in `results/`.
 
-- `wikitext2.jsonl`: short/medium language-modeling prompts.
-- `lambada.jsonl`: prediction-oriented prompts.
-- `long_wikitext2.jsonl`: concatenated long-context prompts for KV-cache tests.
-- `manifest.json`: dataset sizes and generation settings.
-
-The downloaded Hugging Face cache is not stored in this repo.
+Not used in the current comparison: `lambada.jsonl` and broader evaluation datasets. Those should be added later for paper-grade accuracy reporting.

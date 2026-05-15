@@ -2,7 +2,18 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 quant_outputs/
-results/
+results/*
+!results/
+!results/**/
+!results/**/*.json
+!results/**/*.jsonl
+!results/**/*.md
+results/**/*.pt
+results/**/*.dat
+results/offload/
+results/rotorquant_kv/
+results/smoothquant/
+results/turboquant_kv/
 datasets/processed/
 datasets/cache/
 *venv*
@@ -11,5 +22,3 @@ datasets/cache/
 *codex*
 *vscode*
 *cache*
-
-

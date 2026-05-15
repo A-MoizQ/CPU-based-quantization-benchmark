@@ -1,0 +1,21 @@
+{
+  "baseline": "results/turboquant_kv_reference_long_wikitext2_1778750659.json",
+  "candidate": "results/rotorquant_kv_reference_long_wikitext2_1778753695.json",
+  "baseline_method": "turboquant",
+  "candidate_method": "rotorquant",
+  "decode_speedup_x": null,
+  "peak_memory_reduction_fraction": 0.013506520896788832,
+  "peak_memory_reduction_percent": 1.3506520896788832,
+  "artifact_size_reduction_fraction": null,
+  "artifact_size_reduction_percent": null,
+  "kv_cache_reduction_fraction": 0.8984375,
+  "kv_cache_reduction_percent": 89.84375,
+  "baseline_decode_metric": null,
+  "candidate_decode_metric": null,
+  "baseline_peak_memory_mib": 3185.671875,
+  "candidate_peak_memory_mib": 3142.64453125,
+  "baseline_artifact_size_gib": null,
+  "candidate_artifact_size_gib": null,
+  "baseline_kv_cache_mib": 66.0,
+  "candidate_kv_cache_mib": 6.703125
+}
