@@ -5,3 +5,11 @@ quant_outputs/
 results/
 datasets/processed/
 datasets/cache/
+*venv*
+*weights*
+*agents*
+*codex*
+*vscode*
+*cache*
+
+

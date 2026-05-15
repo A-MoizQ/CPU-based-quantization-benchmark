@@ -89,13 +89,13 @@ python scripts/benchmark_transformers_cpu.py \
   --threads 4
 ```
 
-4. Benchmark a saved GPTQ/AWQ artifact (once those Colab runs are done):
+4. Benchmark the saved AWQ artifact:
 
 ```bash
 python scripts/benchmark_transformers_cpu.py \
-  --model-path results/gptq_int4/model \
-  --method gptq \
-  --loader gptq \
+  --model-path weights/awq_int4/model \
+  --method awq \
+  --loader awq \
   --dataset datasets/processed/wikitext2.jsonl \
   --max-samples 8 \
   --max-input-tokens 512 \
@@ -108,8 +108,9 @@ python scripts/benchmark_transformers_cpu.py \
 
 ```bash
 python scripts/kv_quant_reference.py \
-  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --model-path weights/awq_int4/model \
   --method turboquant \
+  --loader awq \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-samples 4 \
   --max-input-tokens 1536 \
@@ -117,8 +118,9 @@ python scripts/kv_quant_reference.py \
   --threads 4
 
 python scripts/kv_quant_reference.py \
-  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --model-path weights/awq_int4/model \
   --method rotorquant \
+  --loader awq \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-samples 4 \
   --max-input-tokens 1536 \
@@ -214,9 +216,9 @@ python -m pip install -r requirements-cpu.txt
 
 ```bash
 python scripts/benchmark_transformers_cpu.py \
-  --model-path /path/to/model_or_quantized_artifact \
-  --method fp32_or_gptq_or_awq \
-  --loader auto \
+  --model-path weights/awq_int4/model \
+  --method awq \
+  --loader awq \
   --dataset datasets/processed/wikitext2.jsonl \
   --max-samples 8 \
   --max-input-tokens 512 \
@@ -225,31 +227,22 @@ python scripts/benchmark_transformers_cpu.py \
   --compute-loss
 ```
 
-For GPTQ CPU loading:
-
-```bash
-python scripts/benchmark_transformers_cpu.py \
-  --model-path results/gptq_int4/model \
-  --method gptq \
-  --loader gptq \
-  --dataset datasets/processed/wikitext2.jsonl \
-  --threads 4
-```
-
 ### TurboQuant / RotorQuant Reference Metrics
 
 ```bash
 python scripts/kv_quant_reference.py \
-  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --model-path weights/awq_int4/model \
   --method turboquant \
+  --loader awq \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-input-tokens 1536 \
   --bits 3 \
   --threads 4
 
 python scripts/kv_quant_reference.py \
-  --model-path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --model-path weights/awq_int4/model \
   --method rotorquant \
+  --loader awq \
   --dataset datasets/processed/long_wikitext2.jsonl \
   --max-input-tokens 1536 \
   --bits 3 \

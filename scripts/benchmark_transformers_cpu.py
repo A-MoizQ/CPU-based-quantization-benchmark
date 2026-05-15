@@ -57,13 +57,20 @@ def load_model(args):
     elif args.loader == "awq":
         from awq import AutoAWQForCausalLM
 
+        awq_device_map = {"": "cpu"} if args.awq_device_map == "cpu" else args.awq_device_map
+        awq_kwargs = {
+            "device_map": awq_device_map,
+            "fuse_layers": False,
+            "safetensors": True,
+            "trust_remote_code": args.trust_remote_code,
+        }
+        if args.awq_device_map != "cpu" and args.offload_folder:
+            awq_kwargs["offload_folder"] = args.offload_folder
         model = AutoAWQForCausalLM.from_quantized(
             args.model_path,
-            device_map="cpu",
-            fuse_layers=False,
-            safetensors=True,
-            trust_remote_code=args.trust_remote_code,
+            **awq_kwargs,
         )
+        model.eval()
         return tokenizer, model
 
     model = AutoModelForCausalLM.from_pretrained(args.model_path, **load_kwargs)
@@ -178,6 +185,12 @@ def main():
     parser.add_argument("--bits", type=int, default=4)
     parser.add_argument("--compute-loss", action="store_true")
     parser.add_argument("--trust-remote-code", action="store_true")
+    parser.add_argument("--offload-folder", default="results/offload")
+    parser.add_argument(
+        "--awq-device-map",
+        default="cpu",
+        help="Device map passed to AutoAWQ. CPU benchmarking should use the default 'cpu'.",
+    )
     args = parser.parse_args()
 
     torch.set_num_threads(args.threads)

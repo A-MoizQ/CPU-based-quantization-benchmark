@@ -143,6 +143,7 @@ def main():
     parser = argparse.ArgumentParser(description="Reference CPU KV-cache compression benchmark for TurboQuant/RotorQuant.")
     parser.add_argument("--model-path", default="facebook/opt-125m")
     parser.add_argument("--method", choices=["turboquant", "rotorquant"], required=True)
+    parser.add_argument("--loader", choices=["auto", "awq"], default="auto")
     parser.add_argument("--dataset", default="datasets/processed/long_wikitext2.jsonl")
     parser.add_argument("--output-dir", default="results")
     parser.add_argument("--max-samples", type=int, default=4)
@@ -150,6 +151,13 @@ def main():
     parser.add_argument("--bits", type=int, default=3)
     parser.add_argument("--threads", type=int, default=2)
     parser.add_argument("--include-qjl-residual-bits", action="store_true")
+    parser.add_argument("--trust-remote-code", action="store_true")
+    parser.add_argument("--offload-folder", default="results/offload")
+    parser.add_argument(
+        "--awq-device-map",
+        default="cpu",
+        help="Device map passed to AutoAWQ. CPU benchmarking should use the default 'cpu'.",
+    )
     args = parser.parse_args()
 
     torch.set_num_threads(args.threads)
@@ -157,10 +165,37 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     rows = read_jsonl(args.dataset, limit=args.max_samples)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=True)
-    model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float32, low_cpu_mem_usage=True)
-    model.to("cpu")
-    model.eval()
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path,
+        use_fast=True,
+        trust_remote_code=args.trust_remote_code,
+    )
+    if args.loader == "awq":
+        from awq import AutoAWQForCausalLM
+
+        awq_device_map = {"": "cpu"} if args.awq_device_map == "cpu" else args.awq_device_map
+        awq_kwargs = {
+            "device_map": awq_device_map,
+            "fuse_layers": False,
+            "safetensors": True,
+            "trust_remote_code": args.trust_remote_code,
+        }
+        if args.awq_device_map != "cpu" and args.offload_folder:
+            awq_kwargs["offload_folder"] = args.offload_folder
+        model = AutoAWQForCausalLM.from_quantized(
+            args.model_path,
+            **awq_kwargs,
+        )
+        model.eval()
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_path,
+            torch_dtype=torch.float32,
+            low_cpu_mem_usage=True,
+            trust_remote_code=args.trust_remote_code,
+        )
+        model.to("cpu")
+        model.eval()
 
     records = []
     with MemorySampler() as sampler:
